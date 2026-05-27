@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:grandmaster_chess/features/chess/domain/entities/board.dart';
-import 'package:grandmaster_chess/features/chess/domain/entities/move.dart';
-import 'package:grandmaster_chess/features/chess/domain/entities/piece.dart' show Piece, PieceType, PieceColor;
-import 'package:grandmaster_chess/features/chess/domain/services/move_validator.dart';
+import 'package:grandmaster_chess/features/gameplay/domain/entities/board.dart';
+import 'package:grandmaster_chess/features/gameplay/domain/entities/move.dart';
+import 'package:grandmaster_chess/features/gameplay/domain/entities/piece.dart' show Piece, PieceType, PieceColor;
+import 'package:grandmaster_chess/features/gameplay/domain/services/move_validator.dart';
 
 void main() {
   late MoveValidator validator;

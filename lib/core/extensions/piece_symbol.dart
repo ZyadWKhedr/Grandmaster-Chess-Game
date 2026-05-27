@@ -1,4 +1,4 @@
-import '../../features/chess/domain/entities/piece.dart';
+import 'package:grandmaster_chess/features/gameplay/domain/entities/piece.dart';
 import 'package:flutter/material.dart';
 
 /// Provides a symbol and a colorable TextStyle for each chess piece

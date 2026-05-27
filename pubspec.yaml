@@ -2,7 +2,7 @@ name: grandmaster_chess
 description: "A premium, feature-rich chess application built with Flutter."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -38,6 +38,9 @@ dependencies:
   flutter_screenutil: ^5.9.3
   google_mobile_ads: ^5.3.0
   freezed_annotation: ^3.1.0
+  easy_localization: ^3.0.8
+  url_launcher: ^6.3.2
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -62,7 +65,6 @@ flutter_launcher_icons:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -71,6 +73,7 @@ flutter:
   assets:
     - assets/images/
     - assets/fonts/
+    - assets/translations/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
