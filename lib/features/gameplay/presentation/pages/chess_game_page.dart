@@ -21,48 +21,35 @@ class ChessGamePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(chessGameProvider);
 
-    ref.listen(chessGameProvider, (previous, next) {
-      if (next.pendingPromotion != null && previous?.pendingPromotion == null) {
-        PromotionDialog.show(context, next.turn);
-      }
-
-      if (next.status != previous?.status) {
-        if (next.status == GameStatus.checkmate) {
-          final winnerKey = next.turn == PieceColor.white ? 'black_wins' : 'white_wins';
-          _handleGameOver(
-            context,
-            ref,
-            next,
-            'checkmate'.tr(),
-            winnerKey.tr(),
-          );
-        } else if (next.status == GameStatus.timeout) {
-          final winnerKey = next.turn == PieceColor.white ? 'black_wins_time' : 'white_wins_time';
-          _handleGameOver(
-            context,
-            ref,
-            next,
-            'time_out'.tr(),
-            winnerKey.tr(),
-          );
-        } else if (next.status == GameStatus.draw) {
-          _handleGameOver(
-            context,
-            ref,
-            next,
-            'draw'.tr(),
-            'game_over_draw'.tr(),
-          );
+    // Separated listener for promotion dialog
+    ref.listen<GameState?>(
+      chessGameProvider,
+      (previous, next) {
+        if (next?.pendingPromotion != null &&
+            previous?.pendingPromotion == null) {
+          PromotionDialog.show(context, next!.turn);
         }
-      }
-    });
+      },
+    );
+
+    // Separated listener for game status changes
+    ref.listen<GameStatus?>(
+      chessGameProvider.select((state) => state.status),
+      (previous, next) {
+        if (next != previous && previous != null) {
+          _handleGameStatusChange(context, ref, state, next!);
+        }
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          state.gameMode == GameMode.pvp ? 'local_multiplayer'.tr() : 'solo_vs_ai'.tr(),
+          state.gameMode == GameMode.pvp
+              ? 'local_multiplayer'.tr()
+              : 'solo_vs_ai'.tr(),
           style: TextStyle(
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
@@ -71,13 +58,6 @@ class ChessGamePage extends ConsumerWidget {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(Icons.undo_rounded, size: 28.sp),
-            tooltip: 'undo_move'.tr(),
-            onPressed: () {
-              ref.read(chessGameProvider.notifier).undoMove();
-            },
-          ),
           Padding(
             padding: EdgeInsets.only(right: 8.w),
             child: IconButton(
@@ -85,10 +65,10 @@ class ChessGamePage extends ConsumerWidget {
               tooltip: 'restart_game'.tr(),
               onPressed: () {
                 ref.read(chessGameProvider.notifier).initGame(
-                      state.gameMode,
-                      playerColor: state.playerColor,
-                      maxTime: state.maxTime,
-                    );
+                  state.gameMode,
+                  playerColor: state.playerColor,
+                  maxTime: state.maxTime,
+                );
               },
             ),
           ),
@@ -108,6 +88,35 @@ class ChessGamePage extends ConsumerWidget {
     );
   }
 
+  void _handleGameStatusChange(
+    BuildContext context,
+    WidgetRef ref,
+    GameState state,
+    GameStatus status,
+  ) {
+    String? title;
+    String? contentKey;
+
+    switch (status) {
+      case GameStatus.checkmate:
+        title = 'checkmate'.tr();
+        contentKey =
+            state.turn == PieceColor.white ? 'black_wins' : 'white_wins';
+      case GameStatus.timeout:
+        title = 'time_out'.tr();
+        contentKey = state.turn == PieceColor.white
+            ? 'black_wins_time'
+            : 'white_wins_time';
+      case GameStatus.draw:
+        title = 'draw'.tr();
+        contentKey = 'game_over_draw';
+      default:
+        return;
+    }
+
+    _handleGameOver(context, ref, state, title, contentKey.tr());
+  }
+
   void _showGameOverAndReport(
     BuildContext context,
     WidgetRef ref,
@@ -125,7 +134,6 @@ class ChessGamePage extends ConsumerWidget {
       playerColor: state.playerColor,
     );
 
-    // Automatically trigger the report card popup
     if (state.moveRecords.isNotEmpty) {
       Future.delayed(const Duration(milliseconds: 600), () {
         if (context.mounted) {

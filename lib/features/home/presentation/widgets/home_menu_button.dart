@@ -20,7 +20,7 @@ class HomeMenuButton extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  build(BuildContext context, WidgetRef ref) {
     return SizedBox(
       width: 280.w,
       height: 60.h,

@@ -1,12 +1,14 @@
+import 'package:grandmaster_chess/features/gameplay/domain/entities/move_record.dart';
 import 'package:grandmaster_chess/features/gameplay/presentation/providers/game_state.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/board.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/move.dart';
-import 'package:grandmaster_chess/features/gameplay/domain/entities/move_record.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/piece.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/square_position.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/services/move_validator.dart';
 import 'package:grandmaster_chess/features/ai/domain/services/ai/chess_ai_service.dart';
 import 'package:grandmaster_chess/features/ai/domain/services/ai_trash_talk_service.dart';
+
+
 
 class ChessGameService {
   final MoveValidator _validator;
@@ -46,8 +48,16 @@ class ChessGameService {
   }
 
   GameState applyMove(GameState state, Move move) {
-    // Capture evaluation BEFORE the move for move analysis
-    final evalBefore = _aiService.evaluateBoardState(state.board, PieceColor.white);
+    // Capture evaluation BEFORE the move for move analysis.
+    final evalBefore = _aiService.evaluateBoardStateWithRights(
+      state.board,
+      state.turn,  // FIX: Use actual moving player
+      canCastleWKS: state.canCastleWhiteKingSide,
+      canCastleWQS: state.canCastleWhiteQueenSide,
+      canCastleBKS: state.canCastleBlackKingSide,
+      canCastleBQS: state.canCastleBlackQueenSide,
+      enPassantTarget: state.enPassantTarget,
+    );
     final movingPlayer = state.turn;
 
     final newSquares = state.board.squares
@@ -57,6 +67,9 @@ class ChessGameService {
     final capturedPiece = newSquares[move.toRow][move.toCol];
 
     if (movingPiece == null) return state;
+
+    // Detect sacrifice: moving piece is more valuable than captured piece
+    final bool isSacrifice = _isSacrifice(movingPiece, capturedPiece);
 
     final newWhiteCaptured = List<Piece>.from(state.whiteCaptured);
     final newBlackCaptured = List<Piece>.from(state.blackCaptured);
@@ -70,14 +83,18 @@ class ChessGameService {
       }
     }
 
-    // --- EN PASSANT CAPTURE ---
+    // --- EN PASSANT CAPTURE (FIXED) ---
     if (movingPiece.type == PieceType.pawn &&
         state.enPassantTarget?.row == move.toRow &&
         state.enPassantTarget?.col == move.toCol) {
-      final capturedPawnRow = move.fromRow;
-      final capturedPawnCol = move.toCol;
+      // The captured pawn is one rank behind our destination
+      final capturedPawnRow = movingPiece.color == PieceColor.white
+          ? state.enPassantTarget!.row + 1  // White pawns move down
+          : state.enPassantTarget!.row - 1; // Black pawns move up
+      final capturedPawnCol = state.enPassantTarget!.col;
+      
       final extraCapture = newSquares[capturedPawnRow][capturedPawnCol];
-      if (extraCapture != null) {
+      if (extraCapture != null && extraCapture.type == PieceType.pawn) {
         if (state.turn == PieceColor.white) {
           newWhiteCaptured.add(extraCapture);
         } else {
@@ -175,12 +192,24 @@ class ChessGameService {
       nextCastleBQS: nextCastleBQS,
       evalBefore: evalBefore,
       movingPlayer: movingPlayer,
+      isSacrifice: isSacrifice,
     );
   }
 
   GameState promotePiece(GameState state, PieceType type) {
     final move = state.pendingPromotion;
     if (move == null) return state;
+
+    final evalBefore = _aiService.evaluateBoardStateWithRights(
+      state.board,
+      state.turn,  // FIX: Use actual moving player
+      canCastleWKS: state.canCastleWhiteKingSide,
+      canCastleWQS: state.canCastleWhiteQueenSide,
+      canCastleBKS: state.canCastleBlackKingSide,
+      canCastleBQS: state.canCastleBlackQueenSide,
+      enPassantTarget: state.enPassantTarget,
+    );
+    final movingPlayer = state.turn;
 
     final newSquares = state.board.squares
         .map((row) => List<Piece?>.from(row))
@@ -217,6 +246,9 @@ class ChessGameService {
       nextCastleWQS: state.canCastleWhiteQueenSide,
       nextCastleBKS: state.canCastleBlackKingSide,
       nextCastleBQS: state.canCastleBlackQueenSide,
+      evalBefore: evalBefore,
+      movingPlayer: movingPlayer,
+      isSacrifice: false,
     );
   }
 
@@ -233,22 +265,26 @@ class ChessGameService {
     required bool nextCastleBQS,
     int? evalBefore,
     PieceColor? movingPlayer,
+    bool isSacrifice = false,
   }) {
     final nextBoard = Board(newSquares);
     final nextTurn = state.turn == PieceColor.white
         ? PieceColor.black
         : PieceColor.white;
 
-    // --- HALFMOVE CLOCK (50-MOVE RULE) ---
-    // Reset if pawn moves or capture occurs
+    // --- HALFMOVE CLOCK (50-MOVE RULE) (IMPROVED) ---
     final movingPiece = state.board.pieceAt(move.fromRow, move.fromCol);
-    final isCapture = state.board.pieceAt(move.toRow, move.toCol) != null;
-    final isPawnMove = movingPiece?.type == PieceType.pawn;
-    final nextHalfMoveClock = (isCapture || isPawnMove)
+    final captureTarget = state.board.pieceAt(move.toRow, move.toCol);
+    final epCaptureExists = movingPiece?.type == PieceType.pawn &&
+        state.enPassantTarget?.row == move.toRow &&
+        state.enPassantTarget?.col == move.toCol;
+
+    final nextHalfMoveClock = (movingPiece?.type == PieceType.pawn || 
+                               captureTarget != null || 
+                               epCaptureExists)
         ? 0
         : state.halfMoveClock + 1;
 
-    // --- INTERMEDIATE STATE FOR POSITION KEY ---
     var nextState = state.copyWith(
       board: nextBoard,
       turn: nextTurn,
@@ -268,9 +304,9 @@ class ChessGameService {
     final nextMoveHistory = List<String>.from(state.moveHistory)
       ..add(positionKey);
 
-    // --- AI CHAT LOGIC ---
+    // --- AI CHAT LOGIC (IMPROVED) ---
     String? aiMessage;
-    if (state.gameMode == GameMode.pva && state.turn == state.playerColor) {
+    if (state.gameMode == GameMode.pva && nextTurn == state.playerColor) {
       final aiColor = state.playerColor == PieceColor.white
           ? PieceColor.black
           : PieceColor.white;
@@ -278,17 +314,17 @@ class ChessGameService {
       final currEval = _aiService.evaluateBoardState(nextBoard, aiColor);
       final diff = currEval - prevEval;
 
-      if (diff > 200) {
+      // Higher thresholds to reduce spam
+      if (diff > 250) {
         aiMessage = _trashTalkService.getComment(SarcasmType.userBlunder);
-      } else if (diff < -150) {
+      } else if (diff < -200) {
         aiMessage = _trashTalkService.getComment(SarcasmType.userGoodMove);
-      } else if (currEval > 600) {
+      } else if (currEval > 700 && state.moveRecords.length > 20) {
         aiMessage = _trashTalkService.getComment(SarcasmType.aiWinning);
-      } else if (currEval < -600) {
+      } else if (currEval < -700 && state.moveRecords.length > 20) {
         aiMessage = _trashTalkService.getComment(SarcasmType.aiLosing);
       }
     }
-    // ---------------------
 
     final status = _calculateStatus(
       nextBoard,
@@ -302,19 +338,27 @@ class ChessGameService {
       nextPositionCounts[positionKey] ?? 0,
     );
 
-    // --- MOVE RECORD (quality analysis) ---
+    // --- MOVE RECORD (SIMPLIFIED DELTA) ---
     List<MoveRecord> nextMoveRecords = List<MoveRecord>.from(state.moveRecords);
     if (evalBefore != null && movingPlayer != null) {
-      final evalAfter = _aiService.evaluateBoardState(nextBoard, PieceColor.white);
-      final delta = movingPlayer == PieceColor.white
-          ? evalAfter - evalBefore
-          : evalBefore - evalAfter;
+      final evalAfter = _aiService.evaluateBoardStateWithRights(
+        nextBoard,
+        movingPlayer,
+        canCastleWKS: nextCastleWKS,
+        canCastleWQS: nextCastleWQS,
+        canCastleBKS: nextCastleBKS,
+        canCastleBQS: nextCastleBQS,
+        enPassantTarget: nextEnPassantTarget,
+      );
+      // FIX: Simplified delta calculation
+      final delta = evalAfter - evalBefore;
       nextMoveRecords.add(MoveRecord(
         move: move,
         player: movingPlayer,
-        quality: MoveRecord.classify(delta),
+        quality: MoveRecord.classify(delta, isSacrifice: isSacrifice),
         evalBefore: evalBefore,
         evalAfter: evalAfter,
+        isSacrifice: isSacrifice,
       ));
     }
 
@@ -379,30 +423,24 @@ class ChessGameService {
     }
 
     // --- DRAW CONDITIONS ---
-    // 1. Threefold Repetition
-    if (positionCount >= 3) {
-      return GameStatus.draw;
-    }
-
-    // 2. 50-move rule (100 half-moves)
-    if (halfMoveClock >= 100) {
-      return GameStatus.draw;
-    }
-
-    // 3. Insufficient Material
-    if (_isInsufficientMaterial(board)) {
-      return GameStatus.draw;
-    }
+    if (positionCount >= 3) return GameStatus.draw;
+    if (halfMoveClock >= 100) return GameStatus.draw;
+    if (_isInsufficientMaterial(board)) return GameStatus.draw;
 
     return isCheck ? GameStatus.check : GameStatus.ongoing;
   }
 
   bool _isInsufficientMaterial(Board board) {
     final pieces = <Piece>[];
+    final piecePositions = <int, (int, int)>{}; // index -> (row, col)
+
     for (int r = 0; r < 8; r++) {
       for (int c = 0; c < 8; c++) {
         final p = board.pieceAt(r, c);
-        if (p != null) pieces.add(p);
+        if (p != null) {
+          piecePositions[pieces.length] = (r, c);
+          pieces.add(p);
+        }
       }
     }
 
@@ -417,30 +455,59 @@ class ChessGameService {
       }
     }
 
-    // King + Bishop vs King + Bishop (same color bishops)
+    // King + Bishop vs King + Bishop (same color squares) - FIXED
     if (pieces.length == 4) {
-      final whites = pieces.where((p) => p.color == PieceColor.white).toList();
-      final blacks = pieces.where((p) => p.color == PieceColor.black).toList();
+      final whites = <int>[];
+      final blacks = <int>[];
+      
+      for (int i = 0; i < pieces.length; i++) {
+        if (pieces[i].color == PieceColor.white) {
+          whites.add(i);
+        } else {
+          blacks.add(i);
+        }
+      }
+
       if (whites.length == 2 && blacks.length == 2) {
-        final wBishop = whites.firstWhere(
-          (p) => p.type == PieceType.bishop,
-          orElse: () => pieces[0],
-        ); // Dummy if not found
-        final bBishop = blacks.firstWhere(
-          (p) => p.type == PieceType.bishop,
-          orElse: () => pieces[0],
+        final wBishopIdx = whites.firstWhere(
+          (i) => pieces[i].type == PieceType.bishop,
+          orElse: () => -1,
+        );
+        final bBishopIdx = blacks.firstWhere(
+          (i) => pieces[i].type == PieceType.bishop,
+          orElse: () => -1,
         );
 
-        // Actually checking bishop color is complex because we don't have square color here
-        // Simple heuristic: if it's two bishops and no other pieces, it's often a draw
-        if (wBishop.type == PieceType.bishop &&
-            bBishop.type == PieceType.bishop) {
-          // This is a simplification; strictly we should check if they are on the same color squares
-          return true;
+        if (wBishopIdx != -1 && bBishopIdx != -1) {
+          final wPos = piecePositions[wBishopIdx]!;
+          final bPos = piecePositions[bBishopIdx]!;
+          // Same color square = both bishops on light or both on dark
+          final wSquareColor = (wPos.$1 + wPos.$2) % 2;
+          final bSquareColor = (bPos.$1 + bPos.$2) % 2;
+          return wSquareColor == bSquareColor;
         }
       }
     }
 
     return false;
   }
+
+  bool _isSacrifice(Piece movingPiece, Piece? capturedPiece) {
+    if (capturedPiece == null) return false;
+    final moving = _pieceValue(movingPiece.type);
+    final captured = _pieceValue(capturedPiece.type);
+    return (moving - captured) >= 300;
+  }
+
+  int _pieceValue(PieceType type) {
+    switch (type) {
+      case PieceType.pawn:   return 100;
+      case PieceType.knight: return 320;
+      case PieceType.bishop: return 330;
+      case PieceType.rook:   return 500;
+      case PieceType.queen:  return 900;
+      case PieceType.king:   return 20000;
+    }
+  }
 }
+
