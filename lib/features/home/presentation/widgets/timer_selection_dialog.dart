@@ -8,12 +8,14 @@ class TimerSelectionDialog extends StatelessWidget {
   Future<Duration?> _showCustomTimePicker(BuildContext context) async {
     final controller = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    
+
     return showDialog<Duration>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
           title: Text('enter_custom_time'.tr()),
           content: Form(
             key: formKey,
@@ -27,12 +29,16 @@ class TimerSelectionDialog extends StatelessWidget {
                   decoration: InputDecoration(
                     labelText: 'minutes'.tr(),
                     hintText: 'time_limit_hint'.tr(),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) return 'invalid_time'.tr();
+                    if (value == null || value.isEmpty)
+                      return 'invalid_time'.tr();
                     final val = int.tryParse(value);
-                    if (val == null || val <= 0 || val > 180) return 'invalid_time'.tr();
+                    if (val == null || val <= 0 || val > 180)
+                      return 'invalid_time'.tr();
                     return null;
                   },
                 ),
@@ -104,7 +110,8 @@ class TimerSelectionDialog extends StatelessWidget {
                     context,
                     'ten_minutes'.tr(),
                     Icons.timer_outlined,
-                    () => Navigator.of(context).pop(const Duration(minutes: 10)),
+                    () =>
+                        Navigator.of(context).pop(const Duration(minutes: 10)),
                   ),
                 ),
               ],
@@ -178,7 +185,9 @@ class TimerSelectionDialog extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+            color: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.08),
             width: 1.5,
           ),
           borderRadius: BorderRadius.circular(16.r),
@@ -196,7 +205,9 @@ class TimerSelectionDialog extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(10.w),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -209,10 +220,7 @@ class TimerSelectionDialog extends StatelessWidget {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
             ),
           ],
         ),

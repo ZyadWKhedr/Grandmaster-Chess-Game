@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:grandmaster_chess/features/gameplay/presentation/providers/game_state.dart';
@@ -36,7 +37,7 @@ class DifficultySelectionDialog extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Select Difficulty',
+              'select_difficulty'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 24.sp,
@@ -46,7 +47,7 @@ class DifficultySelectionDialog extends StatelessWidget {
             ),
             SizedBox(height: 8.h),
             Text(
-              'How challenging should the AI be?',
+              'challenging'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14.sp,
@@ -58,32 +59,32 @@ class DifficultySelectionDialog extends StatelessWidget {
             SizedBox(height: 24.h),
             _DifficultyOption(
               difficulty: Difficulty.beginner,
-              label: 'Beginner',
-              subtitle: 'Just starting out (Easy)',
+              label: 'beginner'.tr(),
+              subtitle: 'easy'.tr(),
               icon: Icons.emoji_emotions_outlined,
               color: Colors.green,
             ),
             SizedBox(height: 12.h),
             _DifficultyOption(
               difficulty: Difficulty.intermediate,
-              label: 'Intermediate',
-              subtitle: 'A decent challenge (Medium)',
+              label: 'intermediate'.tr(),
+              subtitle: 'medium'.tr(),
               icon: Icons.psychology_outlined,
               color: Colors.orange,
             ),
             SizedBox(height: 12.h),
             _DifficultyOption(
               difficulty: Difficulty.master,
-              label: 'Master',
-              subtitle: 'Strong opponent (Hard)',
+              label: 'master'.tr(),
+              subtitle: 'hard'.tr(),
               icon: Icons.military_tech_outlined,
               color: Colors.red,
             ),
             SizedBox(height: 12.h),
             _DifficultyOption(
               difficulty: Difficulty.grandmaster,
-              label: 'Grandmaster',
-              subtitle: 'Maximum power (Extreme)',
+              label: 'grandmaster'.tr(),
+              subtitle: 'extreme'.tr(),
               icon: Icons.workspace_premium_outlined,
               color: Colors.purple,
             ),

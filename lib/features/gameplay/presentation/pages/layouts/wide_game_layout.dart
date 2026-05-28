@@ -20,7 +20,9 @@ class WideGameLayout extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isFlipped = state.playerColor == PieceColor.black;
     final topCaptured = isFlipped ? state.whiteCaptured : state.blackCaptured;
-    final bottomCaptured = isFlipped ? state.blackCaptured : state.whiteCaptured;
+    final bottomCaptured = isFlipped
+        ? state.blackCaptured
+        : state.whiteCaptured;
 
     return Column(
       children: [
@@ -38,7 +40,9 @@ class WideGameLayout extends ConsumerWidget {
                     children: [
                       GameTimerWidget(
                         time: isFlipped ? state.whiteTime : state.blackTime,
-                        isActive: state.turn == (isFlipped ? PieceColor.white : PieceColor.black),
+                        isActive:
+                            state.turn ==
+                            (isFlipped ? PieceColor.white : PieceColor.black),
                         color: isFlipped ? PieceColor.white : PieceColor.black,
                       ),
                       const SizedBox(height: 10),
@@ -54,7 +58,7 @@ class WideGameLayout extends ConsumerWidget {
                 // Evaluation Bar
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 20.h),
-                  child: EvaluationBarWidget(isFlipped: isFlipped),
+                  child: EvaluationBarWidget(isFlipped: false),
                 ),
                 SizedBox(width: 10.w),
                 // Center Chessboard and Actions Column
@@ -72,13 +76,24 @@ class WideGameLayout extends ConsumerWidget {
                         icon: Icon(Icons.undo_rounded, size: 20.sp),
                         label: Text(
                           'undo_move'.tr().toUpperCase(),
-                          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.1, fontSize: 13.sp),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.1,
+                            fontSize: 13.sp,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-                          foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.secondaryContainer,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onSecondaryContainer,
                           elevation: 0,
-                          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.w,
+                            vertical: 10.h,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
@@ -97,7 +112,9 @@ class WideGameLayout extends ConsumerWidget {
                     children: [
                       GameTimerWidget(
                         time: isFlipped ? state.blackTime : state.whiteTime,
-                        isActive: state.turn == (isFlipped ? PieceColor.black : PieceColor.white),
+                        isActive:
+                            state.turn ==
+                            (isFlipped ? PieceColor.black : PieceColor.white),
                         color: isFlipped ? PieceColor.black : PieceColor.white,
                       ),
                       const SizedBox(height: 10),

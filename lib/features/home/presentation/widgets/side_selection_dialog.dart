@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/piece.dart';
@@ -36,7 +37,7 @@ class SideSelectionDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Choose Your Side',
+              'choose_side'.tr(),
               style: TextStyle(
                 fontSize: 24.sp,
                 fontWeight: FontWeight.bold,
@@ -45,7 +46,7 @@ class SideSelectionDialog extends StatelessWidget {
             ),
             SizedBox(height: 8.h),
             Text(
-              'Who would you like to play as?',
+              'play_as'.tr(),
               style: TextStyle(
                 fontSize: 14.sp,
                 color: theme.textTheme.bodyMedium?.color?.withValues(
@@ -59,7 +60,7 @@ class SideSelectionDialog extends StatelessWidget {
                 Expanded(
                   child: _SideOption(
                     color: PieceColor.white,
-                    label: 'White',
+                    label: 'white'.tr(),
                     onTap: () => Navigator.of(context).pop(PieceColor.white),
                     backgroundColor: isDark
                         ? const Color(0xFF2C2C2C)
@@ -71,7 +72,7 @@ class SideSelectionDialog extends StatelessWidget {
                 Expanded(
                   child: _SideOption(
                     color: PieceColor.black,
-                    label: 'Black',
+                    label: 'black'.tr(),
                     onTap: () => Navigator.of(context).pop(PieceColor.black),
                     backgroundColor: isDark
                         ? const Color(0xFF1E1E1E)

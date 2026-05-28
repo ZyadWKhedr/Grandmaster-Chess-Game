@@ -11,6 +11,7 @@ class LanguagePage extends StatelessWidget {
     final languages = [
       ('English', 'en', '🇺🇸'),
       ('العربية', 'ar', '🇪🇬'),
+      ('Deutsch', 'de', '🇩🇪'),
       ('Français', 'fr', '🇫🇷'),
       ('हिन्दी', 'hi', '🇮🇳'),
       ('Русский', 'ru', '🇷🇺'),
@@ -20,9 +21,7 @@ class LanguagePage extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('languages').tr(),
-      ),
+      appBar: AppBar(title: const Text('languages').tr()),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: languages.length,

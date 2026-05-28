@@ -14,10 +14,7 @@ class SettingsPage extends StatelessWidget {
     return Drawer(
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -35,14 +32,12 @@ class SettingsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const LanguagePage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const LanguagePage()),
                   );
                 },
               ),
 
-                  const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
               SettingsTile(
                 icon: Icons.dark_mode_rounded,
@@ -51,14 +46,12 @@ class SettingsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const ThemePage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const ThemePage()),
                   );
                 },
               ),
 
-                  const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
               SettingsTile(
                 icon: Icons.info_outline_rounded,
@@ -67,9 +60,7 @@ class SettingsPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const AboutPage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const AboutPage()),
                   );
                 },
               ),
@@ -78,7 +69,7 @@ class SettingsPage extends StatelessWidget {
 
               Center(
                 child: Text(
-                  'Chess Master v1.0.0',
+                  'GrandMaster Chess v2.1.0',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
