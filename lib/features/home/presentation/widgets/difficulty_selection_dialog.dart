@@ -1,6 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:grandmaster_chess/core/widgets/app_card.dart';
+import 'package:grandmaster_chess/core/widgets/app_dialog.dart';
 import 'package:grandmaster_chess/features/gameplay/presentation/providers/game_state.dart';
 
 class DifficultySelectionDialog extends StatelessWidget {
@@ -8,101 +11,58 @@ class DifficultySelectionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
-      child: Container(
-        width: double.infinity,
-        constraints: BoxConstraints(maxWidth: 400.w),
-        padding: EdgeInsets.all(24.w),
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-          borderRadius: BorderRadius.circular(24.r),
-          border: Border.all(
-            color: theme.colorScheme.primary.withValues(alpha: 0.2),
-            width: 1,
+    return AppDialog(
+      title: 'select_difficulty'.tr(),
+      subtitle: 'challenging'.tr(),
+      icon: Icons.psychology_rounded,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _DifficultyTile(
+            difficulty: Difficulty.beginner,
+            label: 'beginner'.tr(),
+            subtitle: 'easy'.tr(),
+            icon: Icons.sentiment_satisfied_rounded,
+            color: const Color(0xFF10B981),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'select_difficulty'.tr(),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 24.sp,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'challenging'.tr(),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: theme.textTheme.bodyMedium?.color?.withValues(
-                  alpha: 0.7,
-                ),
-              ),
-            ),
-            SizedBox(height: 24.h),
-            _DifficultyOption(
-              difficulty: Difficulty.beginner,
-              label: 'beginner'.tr(),
-              subtitle: 'easy'.tr(),
-              icon: Icons.emoji_emotions_outlined,
-              color: Colors.green,
-            ),
-            SizedBox(height: 12.h),
-            _DifficultyOption(
-              difficulty: Difficulty.intermediate,
-              label: 'intermediate'.tr(),
-              subtitle: 'medium'.tr(),
-              icon: Icons.psychology_outlined,
-              color: Colors.orange,
-            ),
-            SizedBox(height: 12.h),
-            _DifficultyOption(
-              difficulty: Difficulty.master,
-              label: 'master'.tr(),
-              subtitle: 'hard'.tr(),
-              icon: Icons.military_tech_outlined,
-              color: Colors.red,
-            ),
-            SizedBox(height: 12.h),
-            _DifficultyOption(
-              difficulty: Difficulty.grandmaster,
-              label: 'grandmaster'.tr(),
-              subtitle: 'extreme'.tr(),
-              icon: Icons.workspace_premium_outlined,
-              color: Colors.purple,
-            ),
-          ],
-        ),
+          SizedBox(height: 10.h),
+          _DifficultyTile(
+            difficulty: Difficulty.intermediate,
+            label: 'intermediate'.tr(),
+            subtitle: 'medium'.tr(),
+            icon: Icons.psychology_rounded,
+            color: const Color(0xFFF59E0B),
+          ),
+          SizedBox(height: 10.h),
+          _DifficultyTile(
+            difficulty: Difficulty.master,
+            label: 'master'.tr(),
+            subtitle: 'hard'.tr(),
+            icon: Icons.military_tech_rounded,
+            color: const Color(0xFFEF4444),
+          ),
+          SizedBox(height: 10.h),
+          _DifficultyTile(
+            difficulty: Difficulty.grandmaster,
+            label: 'grandmaster'.tr(),
+            subtitle: 'extreme'.tr(),
+            icon: Icons.workspace_premium_rounded,
+            color: const Color(0xFF8B5CF6),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _DifficultyOption extends StatelessWidget {
+class _DifficultyTile extends StatelessWidget {
   final Difficulty difficulty;
   final String label;
   final String subtitle;
   final IconData icon;
   final Color color;
 
-  const _DifficultyOption({
+  const _DifficultyTile({
     required this.difficulty,
     required this.label,
     required this.subtitle,
@@ -112,58 +72,55 @@ class _DifficultyOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => Navigator.of(context).pop(difficulty),
-      borderRadius: BorderRadius.circular(16.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
-          color: color.withValues(alpha: 0.05),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(10.w),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 24.sp),
+    return AppCard(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        Navigator.of(context).pop(difficulty);
+      },
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      borderColor: color.withValues(alpha: 0.25),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.w),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
             ),
-            SizedBox(width: 16.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
+            child: Icon(icon, color: color, size: 22.sp),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
                   ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
-                    ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.color
+                        ?.withValues(alpha: 0.65),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Icon(
-              Icons.chevron_right,
-              color: Colors.grey.withValues(alpha: 0.5),
-            ),
-          ],
-        ),
+          ),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: Colors.grey.withValues(alpha: 0.6),
+            size: 20.sp,
+          ),
+        ],
       ),
     );
   }

@@ -32,16 +32,23 @@ class GameStatusWidget extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 300),
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 2.5,
-                  color: statusColor,
+              Flexible(
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 300),
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2.5,
+                    color: statusColor,
+                  ),
+                  child: Text(
+                    statusText,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ),
-                child: Text(statusText),
               ),
               if (status == GameStatus.check)
                 TweenAnimationBuilder<double>(

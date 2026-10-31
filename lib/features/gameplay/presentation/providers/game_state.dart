@@ -1,17 +1,11 @@
 import 'package:grandmaster_chess/features/gameplay/domain/entities/board.dart';
+import 'package:grandmaster_chess/features/gameplay/domain/entities/game_enums.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/move.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/move_record.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/piece.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/square_position.dart';
 
-enum GameMode {
-  pvp, // Player vs Player
-  pva, // Player vs AI
-}
-
-enum GameStatus { ongoing, check, checkmate, draw, timeout }
-
-enum Difficulty { beginner, intermediate, master, grandmaster }
+export 'package:grandmaster_chess/features/gameplay/domain/entities/game_enums.dart';
 
 class GameState {
   final Board board;
@@ -25,15 +19,14 @@ class GameState {
   final GameStatus status;
   final Move? lastMove;
   final Move? pendingPromotion;
-  final List<String> moveHistory; // For threefold repetition detection
-  final int halfMoveClock; // For 50-move rule
-  final Map<String, int> positionCounts; // For threefold repetition
+  final List<String> moveHistory;
+  final int halfMoveClock;
+  final Map<String, int> positionCounts;
 
   final PieceColor playerColor;
   final Difficulty aiDifficulty;
   final String? aiMessage;
 
-  // Advanced Rules State
   final SquarePosition? enPassantTarget;
   final bool canCastleWhiteKingSide;
   final bool canCastleWhiteQueenSide;
@@ -59,14 +52,14 @@ class GameState {
     this.status = GameStatus.ongoing,
     this.lastMove,
     this.pendingPromotion,
+    this.moveHistory = const [],
+    this.halfMoveClock = 0,
+    this.positionCounts = const {},
     this.enPassantTarget,
     this.canCastleWhiteKingSide = true,
     this.canCastleWhiteQueenSide = true,
     this.canCastleBlackKingSide = true,
     this.canCastleBlackQueenSide = true,
-    this.moveHistory = const [],
-    this.halfMoveClock = 0,
-    this.positionCounts = const {},
     this.whiteTime,
     this.blackTime,
     this.maxTime,
@@ -79,7 +72,7 @@ class GameState {
     Difficulty difficulty = Difficulty.intermediate,
     Duration? maxTime,
   }) {
-    final initialState = GameState(
+    return GameState(
       board: Board.initial(),
       turn: PieceColor.white,
       selected: null,
@@ -89,55 +82,38 @@ class GameState {
       gameMode: mode,
       playerColor: playerColor,
       aiDifficulty: difficulty,
-      maxTime: maxTime,
+      status: GameStatus.ongoing,
       whiteTime: maxTime,
       blackTime: maxTime,
-    );
-
-    // Initialize position counts with starting position
-    final positionKey = generatePositionKey(initialState);
-    return initialState.copyWith(
-      positionCounts: {positionKey: 1},
-      moveHistory: [positionKey],
+      maxTime: maxTime,
     );
   }
 
   static String generatePositionKey(GameState state) {
-    // Generate a unique key for the current board position
     final buffer = StringBuffer();
-
-    // Add board state
-    for (var row = 0; row < 8; row++) {
-      for (var col = 0; col < 8; col++) {
-        final piece = state.board.pieceAt(row, col);
-        if (piece != null) {
-          buffer.write(
-            piece.color == PieceColor.white
-                ? piece.type.toString()[0].toUpperCase()
-                : piece.type.toString()[0].toLowerCase(),
-          );
-        } else {
+    for (int r = 0; r < 8; r++) {
+      for (int c = 0; c < 8; c++) {
+        final p = state.board.pieceAt(r, c);
+        if (p == null) {
           buffer.write('.');
+        } else {
+          final char = p.type.name[0];
+          buffer.write(
+            p.color == PieceColor.white ? char.toUpperCase() : char.toLowerCase(),
+          );
         }
       }
     }
-
-    // Add turn
     buffer.write(state.turn == PieceColor.white ? 'w' : 'b');
-
-    // Add castling rights
-    buffer.write(state.canCastleWhiteKingSide ? 'K' : '');
-    buffer.write(state.canCastleWhiteQueenSide ? 'Q' : '');
-    buffer.write(state.canCastleBlackKingSide ? 'k' : '');
-    buffer.write(state.canCastleBlackQueenSide ? 'q' : '');
-    buffer.write(' ');
-
-    // Add en passant marker
-    buffer.write(state.enPassantTarget != null ? 'e' : '-');
-
-    // Add halfmove clock to differentiate positions by their draw potential
-    buffer.write(' h${state.halfMoveClock}');
-
+    buffer.write(state.canCastleWhiteKingSide ? 'K' : '-');
+    buffer.write(state.canCastleWhiteQueenSide ? 'Q' : '-');
+    buffer.write(state.canCastleBlackKingSide ? 'k' : '-');
+    buffer.write(state.canCastleBlackQueenSide ? 'q' : '-');
+    if (state.enPassantTarget != null) {
+      buffer.write('${state.enPassantTarget!.row},${state.enPassantTarget!.col}');
+    } else {
+      buffer.write('-');
+    }
     return buffer.toString();
   }
 

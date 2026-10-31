@@ -1,7 +1,5 @@
-// home_actions_provider.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:grandmaster_chess/features/gameplay/domain/entities/piece.dart';
 import 'package:grandmaster_chess/core/providers/ad_provider.dart';
 import 'package:grandmaster_chess/features/gameplay/presentation/pages/chess_game_page.dart';
@@ -13,7 +11,6 @@ import 'package:grandmaster_chess/features/home/presentation/widgets/timer_selec
 
 final homeActionsProvider = Provider<HomeActionsService>((ref) {
   ref.read(interstitialAdProvider);
-
   return HomeActionsService(ref);
 });
 
@@ -37,13 +34,11 @@ class HomeActionsService {
 
     if (selectedDifficulty == null || !context.mounted) return;
 
-    ref
-        .read(chessGameProvider.notifier)
-        .initGame(
-          GameMode.pva,
-          playerColor: selectedColor,
-          difficulty: selectedDifficulty,
-        );
+    ref.read(chessGameProvider.notifier).initGame(
+      GameMode.pva,
+      playerColor: selectedColor,
+      difficulty: selectedDifficulty,
+    );
 
     _navigateToGame(context);
   }
@@ -56,16 +51,21 @@ class HomeActionsService {
 
     if (result == null || !context.mounted) return;
 
-    final selectedDuration =
-        result == Duration.zero ? null : result;
+    final selectedDuration = result == Duration.zero ? null : result;
 
-    ref
-        .read(chessGameProvider.notifier)
-        .initGame(
-          GameMode.pvp,
-          maxTime: selectedDuration,
-        );
+    ref.read(chessGameProvider.notifier).initGame(
+      GameMode.pvp,
+      maxTime: selectedDuration,
+    );
 
+    _navigateToGame(context);
+  }
+
+  void startQuickMatch(BuildContext context, Duration? duration) {
+    ref.read(chessGameProvider.notifier).initGame(
+      GameMode.pvp,
+      maxTime: duration,
+    );
     _navigateToGame(context);
   }
 

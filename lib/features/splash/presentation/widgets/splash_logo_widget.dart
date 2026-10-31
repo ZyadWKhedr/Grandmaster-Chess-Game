@@ -1,44 +1,40 @@
 import 'package:flutter/material.dart';
 
 class SplashLogoWidget extends StatelessWidget {
-  final Animation<double> fadeAnimation;
-  final Animation<double> scaleAnimation;
-  final AnimationController animationController;
-
-  const SplashLogoWidget({
-    super.key,
-    required this.fadeAnimation,
-    required this.scaleAnimation,
-    required this.animationController,
-  });
+  const SplashLogoWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return AnimatedBuilder(
-      animation: animationController,
-      builder: (context, child) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 1000),
+      curve: Curves.easeOutBack,
+      builder: (context, value, child) {
         return Opacity(
-          opacity: fadeAnimation.value,
-          child: Transform.scale(scale: scaleAnimation.value, child: child),
+          opacity: value.clamp(0.0, 1.0),
+          child: Transform.scale(
+            scale: 0.8 + (0.2 * value),
+            child: child,
+          ),
         );
       },
       child: Container(
-        width: 150,
-        height: 150,
+        width: 140,
+        height: 140,
         decoration: BoxDecoration(
           color: colorScheme.surface,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: colorScheme.primary.withValues(alpha: 0.3),
-              blurRadius: 30,
-              spreadRadius: 5,
+              color: colorScheme.primary.withValues(alpha: 0.35),
+              blurRadius: 32,
+              spreadRadius: 4,
             ),
           ],
         ),
-        child: Icon(Icons.castle, size: 80, color: colorScheme.primary),
+        child: Icon(Icons.castle_rounded, size: 76, color: colorScheme.primary),
       ),
     );
   }

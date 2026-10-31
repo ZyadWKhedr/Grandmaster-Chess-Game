@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:grandmaster_chess/features/gameplay/presentation/providers/chess_game_notifier.dart';
 
+/// Compact, non-intrusive speech bubble for AI trash-talk messages.
+/// Positioned outside the chessboard, fully tap-to-dismiss.
 class AiChatBubble extends ConsumerWidget {
   const AiChatBubble({super.key});
 
@@ -13,64 +15,69 @@ class AiChatBubble extends ConsumerWidget {
 
     if (message == null) return const SizedBox.shrink();
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0.0, end: 1.0),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutBack,
-        builder: (context, value, child) {
-          return Transform.scale(scale: value, child: child);
-        },
+    final theme = Theme.of(context);
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutBack,
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: 0.85 + (0.15 * value),
+          child: Opacity(
+            opacity: value.clamp(0.0, 1.0),
+            child: child,
+          ),
+        );
+      },
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => ref.read(chessGameProvider.notifier).dismissAiMessage(),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-          margin: EdgeInsets.symmetric(
-            horizontal: 8.w,
-          ), // Keep horizontal, remove vertical OR just use zero. Let's keep horizontal if needed or just remove margin.
-          // Actually, let's just minimal margin if needed. But user said "remove space".
-          // I'll remove margin property entirely or set to EdgeInsets.zero if default is none.
-          // Container default margin is null (no margin).
+          margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20.r),
-              topRight: Radius.circular(20.r),
-              bottomRight: Radius.circular(20.r),
-              bottomLeft: Radius.circular(4.r),
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: theme.colorScheme.secondary.withValues(alpha: 0.35),
+              width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 15,
-                spreadRadius: 1,
-                offset: const Offset(0, 8),
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
               ),
             ],
-            border: Border.all(
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.08),
-              width: 1.5,
-            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.smart_toy_outlined,
-                size: 20.sp,
-                color: Theme.of(context).colorScheme.secondary,
+                Icons.smart_toy_rounded,
+                size: 18.sp,
+                color: theme.colorScheme.secondary,
               ),
               SizedBox(width: 8.w),
               Flexible(
                 child: Text(
                   message,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
                     fontStyle: FontStyle.italic,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
+              ),
+              SizedBox(width: 8.w),
+              Icon(
+                Icons.close_rounded,
+                size: 16.sp,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
               ),
             ],
           ),

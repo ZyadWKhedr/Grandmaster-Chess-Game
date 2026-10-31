@@ -1,53 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class SplashTitleWidget extends StatelessWidget {
-  final Animation<double> fadeAnimation;
-  final AnimationController animationController;
-
-  const SplashTitleWidget({
-    super.key,
-    required this.fadeAnimation,
-    required this.animationController,
-  });
+  const SplashTitleWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AnimatedBuilder(
-          animation: animationController,
-          builder: (context, child) {
-            return Opacity(opacity: fadeAnimation.value, child: child);
-          },
-          child: Text(
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 1200),
+      curve: Curves.easeIn,
+      builder: (context, value, child) {
+        return Opacity(opacity: value, child: child);
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
             'Grandmaster Chess',
             style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
+              fontSize: 28.sp,
+              fontWeight: FontWeight.w800,
               color: colorScheme.onSurface,
-              letterSpacing: 1.5,
+              letterSpacing: 1.2,
             ),
           ),
-        ),
-        const SizedBox(height: 12),
-        AnimatedBuilder(
-          animation: animationController,
-          builder: (context, child) {
-            return Opacity(opacity: fadeAnimation.value, child: child);
-          },
-          child: Text(
-            'Master the Game',
+          SizedBox(height: 10.h),
+          Text(
+            'MASTER THE GAME',
             style: TextStyle(
-              fontSize: 16,
-              color: colorScheme.onSurface.withValues(alpha: 0.7),
-              letterSpacing: 3,
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w700,
+              color: colorScheme.onSurface.withValues(alpha: 0.65),
+              letterSpacing: 3.5,
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

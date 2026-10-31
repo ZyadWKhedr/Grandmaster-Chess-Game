@@ -92,7 +92,7 @@ class MoveHistoryWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: colors[quality]?.withOpacity(0.2),
+        color: colors[quality]?.withValues(alpha: 0.2),
         border: Border.all(color: colors[quality] ?? Colors.grey),
         borderRadius: BorderRadius.circular(4),
       ),
@@ -120,7 +120,7 @@ class MoveCache {
   final Map<String, List<Move>> _cache = {};
 
   String _generateKey(int boardHash, int row, int col) {
-    return '${boardHash}_${row}_${col}';
+    return '${boardHash}_${row}_$col';
   }
 
   List<Move>? get(Board board, int row, int col) {

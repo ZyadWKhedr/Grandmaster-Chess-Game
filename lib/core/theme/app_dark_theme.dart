@@ -1,44 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:grandmaster_chess/core/constants/app_colors.dart';
 
 class AppDarkTheme {
   static ThemeData get theme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-
+      scaffoldBackgroundColor: AppColors.darkBackground,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF0F111A),
+        seedColor: AppColors.primaryGreen,
         brightness: Brightness.dark,
-        primary: const Color(0xFFE2E2FF),
-        secondary: const Color(0xFF94A3B8),
-        surface: const Color(0xFF0F111A),
-        surfaceContainerHighest: const Color(
-          0xFF1E293B,
-        ),
+        primary: AppColors.primaryGreen,
+        secondary: AppColors.accentGold,
+        surface: AppColors.darkSurface,
+        surfaceContainerHighest: AppColors.darkSurfaceElevated,
+        onSurface: AppColors.darkTextPrimary,
+        outline: AppColors.darkBorder,
       ),
-
-      scaffoldBackgroundColor: const Color(
-        0xFF0F111A,
-      ),
-
       cardTheme: CardThemeData(
         elevation: 0,
-        color: const Color(0xFF1E293B),
+        color: AppColors.darkSurface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.r),
+          side: const BorderSide(color: AppColors.darkBorder, width: 1.2),
         ),
       ),
-
       appBarTheme: AppBarTheme(
-        backgroundColor: const Color(0xFF0F111A),
-        foregroundColor: const Color(0xFFE2E2FF),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.darkTextPrimary,
         centerTitle: true,
+        elevation: 0,
         titleTextStyle: TextStyle(
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w800,
           fontSize: 20.sp,
-          letterSpacing: 1.2,
-          color: const Color(0xFFE2E2FF),
+          letterSpacing: 0.5,
+          color: AppColors.darkTextPrimary,
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.darkSurfaceElevated,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+          side: const BorderSide(color: AppColors.darkBorder, width: 1.2),
         ),
       ),
     );

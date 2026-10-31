@@ -1,27 +1,22 @@
-// // lib/features/chess/domain/services/game_timer_service.dart
-// import 'dart:async';
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'package:grandmaster_chess/features/chess/domain/presentation/provider/game_state.dart';
+import 'dart:async';
 
-// class GameTimerService {
-//   Timer? _timer;
-//   final Ref _ref;
+/// Pure domain/service layer timer manager for chess clock control.
+class GameTimerService {
+  Timer? _timer;
 
-//   GameTimerService(this._ref);
+  void start({
+    required void Function() onTick,
+  }) {
+    cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => onTick());
+  }
 
-//   void startTimer() {
-//     _timer?.cancel();
-//     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-//       _ref.read(chessGameProvider.notifier).updateTimer();
-//     });
-//   }
+  void cancel() {
+    _timer?.cancel();
+    _timer = null;
+  }
 
-//   void stopTimer() {
-//     _timer?.cancel();
-//     _timer = null;
-//   }
-
-//   void dispose() {
-//     _timer?.cancel();
-//   }
-// }
+  void dispose() {
+    cancel();
+  }
+}

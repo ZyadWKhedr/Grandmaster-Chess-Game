@@ -228,8 +228,9 @@ class MoveValidator {
   // ---------------- BISHOP ----------------
 
   bool _validateBishopMove(Board board, Move move) {
-    if ((move.toRow - move.fromRow).abs() != (move.toCol - move.fromCol).abs())
+    if ((move.toRow - move.fromRow).abs() != (move.toCol - move.fromCol).abs()) {
       return false;
+    }
 
     final rowStep = (move.toRow - move.fromRow).sign.toInt();
     final colStep = (move.toCol - move.fromCol).sign.toInt();
@@ -282,15 +283,17 @@ class MoveValidator {
     // King-side castling
     if (canCastleKingSide && move.toCol - move.fromCol == 2) {
       // Path must be clear
-      if (board.pieceAt(row, 5) != null || board.pieceAt(row, 6) != null)
+      if (board.pieceAt(row, 5) != null || board.pieceAt(row, 6) != null) {
         return false;
+      }
       // Square 5 and 6 must not be attacked
       final opponentColor = piece.color == PieceColor.white
           ? PieceColor.black
           : PieceColor.white;
       if (isSquareAttacked(board, row, 5, opponentColor) ||
-          isSquareAttacked(board, row, 6, opponentColor))
+          isSquareAttacked(board, row, 6, opponentColor)) {
         return false;
+      }
       return true;
     }
 
@@ -299,15 +302,17 @@ class MoveValidator {
       // Path must be clear
       if (board.pieceAt(row, 1) != null ||
           board.pieceAt(row, 2) != null ||
-          board.pieceAt(row, 3) != null)
+          board.pieceAt(row, 3) != null) {
         return false;
-      // Square 2 and 3 must not be attacked (usually just 2 and 3, square 1 doesn't matter for check)
+      }
+      // Square 2 and 3 must not be attacked
       final opponentColor = piece.color == PieceColor.white
           ? PieceColor.black
           : PieceColor.white;
       if (isSquareAttacked(board, row, 2, opponentColor) ||
-          isSquareAttacked(board, row, 3, opponentColor))
+          isSquareAttacked(board, row, 3, opponentColor)) {
         return false;
+      }
       return true;
     }
 

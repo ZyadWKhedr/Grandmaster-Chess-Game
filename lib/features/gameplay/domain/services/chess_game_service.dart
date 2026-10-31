@@ -355,7 +355,12 @@ class ChessGameService {
       nextMoveRecords.add(MoveRecord(
         move: move,
         player: movingPlayer,
-        quality: MoveRecord.classify(delta, isSacrifice: isSacrifice),
+        quality: MoveRecord.classify(
+          delta,
+          isSacrifice: isSacrifice,
+          evalBefore: evalBefore,
+          evalAfter: evalAfter,
+        ),
         evalBefore: evalBefore,
         evalAfter: evalAfter,
         isSacrifice: isSacrifice,

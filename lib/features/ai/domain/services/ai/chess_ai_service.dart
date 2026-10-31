@@ -1,34 +1,81 @@
+import 'package:flutter/foundation.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/square_position.dart';
 import 'package:grandmaster_chess/features/gameplay/presentation/providers/game_state.dart';
-import 'package:grandmaster_chess/features/gameplay/domain/entities/move.dart'; 
-
+import 'package:grandmaster_chess/features/gameplay/domain/entities/move.dart';
+import 'package:grandmaster_chess/features/gameplay/domain/entities/piece.dart';
+import 'package:grandmaster_chess/features/gameplay/domain/entities/board.dart';
 import 'core/search_state.dart';
 import 'search/iterative_deepening.dart';
 import 'evaluation/board_evaluator.dart';
-import 'package:grandmaster_chess/features/gameplay/domain/entities/piece.dart';
-import 'package:grandmaster_chess/features/gameplay/domain/entities/board.dart';
+
+/// Parameter wrapper for running AI computations safely in background isolates.
+class _AiComputeParams {
+  final Board board;
+  final PieceColor turn;
+  final bool whiteKingSide;
+  final bool whiteQueenSide;
+  final bool blackKingSide;
+  final bool blackQueenSide;
+  final SquarePosition? enPassant;
+  final Difficulty difficulty;
+
+  const _AiComputeParams({
+    required this.board,
+    required this.turn,
+    required this.whiteKingSide,
+    required this.whiteQueenSide,
+    required this.blackKingSide,
+    required this.blackQueenSide,
+    required this.enPassant,
+    required this.difficulty,
+  });
+}
 
 class ChessAIService {
-  final IterativeDeepening _search =
-      IterativeDeepening();
+  final IterativeDeepening _search = IterativeDeepening();
+
+  /// Runs the AI search asynchronously in a background Dart isolate using [compute].
+  /// This completely prevents UI frame drops, ANR dialogs, and freezes.
+  Future<Move?> findBestMoveAsync(GameState gameState) async {
+    final params = _AiComputeParams(
+      board: gameState.board,
+      turn: gameState.turn,
+      whiteKingSide: gameState.canCastleWhiteKingSide,
+      whiteQueenSide: gameState.canCastleWhiteQueenSide,
+      blackKingSide: gameState.canCastleBlackKingSide,
+      blackQueenSide: gameState.canCastleBlackQueenSide,
+      enPassant: gameState.enPassantTarget,
+      difficulty: gameState.aiDifficulty,
+    );
+
+    return compute(_isolateSearch, params);
+  }
+
+  /// Top-level or static isolate entry point.
+  static Move? _isolateSearch(_AiComputeParams params) {
+    final searchState = SearchState(
+      board: params.board,
+      turn: params.turn,
+      whiteKingSide: params.whiteKingSide,
+      whiteQueenSide: params.whiteQueenSide,
+      blackKingSide: params.blackKingSide,
+      blackQueenSide: params.blackQueenSide,
+      enPassant: params.enPassant,
+    );
+
+    return IterativeDeepening()
+        .search(state: searchState, difficulty: params.difficulty)
+        .bestMove;
+  }
 
   Move? findBestMove(GameState gameState) {
     final searchState = SearchState(
       board: gameState.board,
       turn: gameState.turn,
-
-      whiteKingSide:
-          gameState.canCastleWhiteKingSide,
-
-      whiteQueenSide:
-          gameState.canCastleWhiteQueenSide,
-
-      blackKingSide:
-          gameState.canCastleBlackKingSide,
-
-      blackQueenSide:
-          gameState.canCastleBlackQueenSide,
-
+      whiteKingSide: gameState.canCastleWhiteKingSide,
+      whiteQueenSide: gameState.canCastleWhiteQueenSide,
+      blackKingSide: gameState.canCastleBlackKingSide,
+      blackQueenSide: gameState.canCastleBlackQueenSide,
       enPassant: gameState.enPassantTarget,
     );
 
@@ -52,9 +99,6 @@ class ChessAIService {
     return BoardEvaluator().evaluate(searchState);
   }
 
-  /// Evaluate the board with full game context (castling rights & en-passant).
-  /// Used by move-quality analysis so the evaluator has accurate king-safety
-  /// and castling-bonus data — unlike [evaluateBoardState] which uses defaults.
   int evaluateBoardStateWithRights(
     Board board,
     PieceColor color, {

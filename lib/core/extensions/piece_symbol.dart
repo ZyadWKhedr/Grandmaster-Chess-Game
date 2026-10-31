@@ -26,6 +26,21 @@ extension PieceSymbol on Piece {
           }[type]!;
   }
 
+  /// High-resolution tournament-grade piece asset path
+  String get assetPath =>
+      'assets/images/pieces/classic/${type.name}_${color.name}.png';
+
+  /// Renders the high-definition piece graphic
+  Widget renderImage({double? size, BoxFit fit = BoxFit.contain}) {
+    return Image.asset(
+      assetPath,
+      width: size,
+      height: size,
+      fit: fit,
+      filterQuality: FilterQuality.medium,
+    );
+  }
+
   /// Generates a Text widget ready to render the piece
   Text render({double fontSize = 38, Color? color, bool bold = true}) {
     final isWhite = this.color == PieceColor.white;

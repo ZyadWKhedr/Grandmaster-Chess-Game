@@ -7,75 +7,27 @@ import 'package:grandmaster_chess/features/splash/presentation/widgets/splash_ti
 import 'package:grandmaster_chess/features/splash/presentation/widgets/splash_loading_widget.dart';
 import 'package:grandmaster_chess/features/home/presentation/pages/chess_home_page.dart';
 
-class SplashScreen extends ConsumerStatefulWidget {
+class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
 
-  @override
-  ConsumerState<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends ConsumerState<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _setupAnimations();
-  }
-
-  void _setupAnimations() {
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
-      ),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.5, curve: Curves.easeOutBack),
-      ),
-    );
-
-    _animationController.forward();
-  }
-
-  void _navigateToHome() {
+  void _navigateToHome(BuildContext context) {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const ChessHomePage(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
+        pageBuilder: (_, animation, __) => const ChessHomePage(),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 500),
       ),
     );
   }
 
   @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final splashState = ref.watch(splashProvider);
 
-    // Listen for ready state and navigate
     ref.listen<SplashState>(splashProvider, (previous, next) {
       if (next.isReady && (previous == null || !previous.isReady)) {
-        _navigateToHome();
+        _navigateToHome(context);
       }
     });
 
@@ -101,16 +53,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(flex: 2),
-              SplashLogoWidget(
-                fadeAnimation: _fadeAnimation,
-                scaleAnimation: _scaleAnimation,
-                animationController: _animationController,
-              ),
-              const SizedBox(height: 40),
-              SplashTitleWidget(
-                fadeAnimation: _fadeAnimation,
-                animationController: _animationController,
-              ),
+              const SplashLogoWidget(),
+              const SizedBox(height: 36),
+              const SplashTitleWidget(),
               const Spacer(flex: 2),
               SplashLoadingWidget(message: splashState.loadingMessage),
             ],

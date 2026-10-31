@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/move.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/piece.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/square_position.dart';
+import 'package:grandmaster_chess/features/gameplay/domain/services/game_timer_service.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/services/move_validator.dart';
 import 'package:grandmaster_chess/features/ai/domain/services/ai/chess_ai_service.dart';
 import 'package:grandmaster_chess/features/ai/domain/services/ai_trash_talk_service.dart';
@@ -13,7 +14,7 @@ import 'package:grandmaster_chess/features/gameplay/presentation/providers/game_
 class ChessGameNotifier extends StateNotifier<GameState> {
   ChessGameNotifier() : super(GameState.initial());
 
-  Timer? _gameTimer;
+  final GameTimerService _timerService = GameTimerService();
   final List<GameState> _stateHistory = [];
 
   final ChessAIService _aiService = ChessAIService();
@@ -29,7 +30,7 @@ class ChessGameNotifier extends StateNotifier<GameState> {
     Difficulty difficulty = Difficulty.intermediate,
     Duration? maxTime,
   }) {
-    _gameTimer?.cancel();
+    _timerService.cancel();
     _stateHistory.clear();
     state = GameState.initial(
       mode: mode,
@@ -48,51 +49,36 @@ class ChessGameNotifier extends StateNotifier<GameState> {
   }
 
   void _startTimer() {
-    _gameTimer?.cancel();
-    _gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (state.status != GameStatus.ongoing &&
-          state.status != GameStatus.check) {
-        _gameTimer?.cancel();
-        return;
-      }
+    _timerService.start(
+      onTick: () {
+        if (state.status != GameStatus.ongoing &&
+            state.status != GameStatus.check) {
+          _timerService.cancel();
+          return;
+        }
 
-      if (state.turn == PieceColor.white) {
-        final newTime = state.whiteTime! - const Duration(seconds: 1);
+        final isWhite = state.turn == PieceColor.white;
+        final currentTime = isWhite ? state.whiteTime : state.blackTime;
+        if (currentTime == null) return;
+
+        final newTime = currentTime - const Duration(seconds: 1);
         if (newTime.inSeconds <= 0) {
-          state = state.copyWith(
-            whiteTime: Duration.zero,
-            status: GameStatus.timeout,
-          );
-          _gameTimer?.cancel();
+          state = isWhite
+              ? state.copyWith(whiteTime: Duration.zero, status: GameStatus.timeout)
+              : state.copyWith(blackTime: Duration.zero, status: GameStatus.timeout);
+          _timerService.cancel();
         } else {
-          state = state.copyWith(whiteTime: newTime);
+          state = isWhite
+              ? state.copyWith(whiteTime: newTime)
+              : state.copyWith(blackTime: newTime);
         }
-      } else {
-        final newTime = state.blackTime! - const Duration(seconds: 1);
-        if (newTime.inSeconds <= 0) {
-          state = state.copyWith(
-            blackTime: Duration.zero,
-            status: GameStatus.timeout,
-          );
-          _gameTimer?.cancel();
-        } else {
-          state = state.copyWith(blackTime: newTime);
-        }
-      }
-    });
+      },
+    );
   }
 
   void selectSquare(int row, int col) {
-    if (state.isThinking ||
-        state.status == GameStatus.checkmate ||
-        state.status == GameStatus.draw ||
-        state.status == GameStatus.timeout) {
-      return;
-    }
-
-    if (state.gameMode == GameMode.pva && state.turn != state.playerColor) {
-      return;
-    }
+    if (state.isThinking || _isTerminalStatus(state.status)) return;
+    if (state.gameMode == GameMode.pva && state.turn != state.playerColor) return;
 
     final piece = state.board.pieceAt(row, col);
 
@@ -112,16 +98,8 @@ class ChessGameNotifier extends StateNotifier<GameState> {
   }
 
   void tryMove(int toRow, int toCol) {
-    if (state.isThinking ||
-        state.status == GameStatus.checkmate ||
-        state.status == GameStatus.draw ||
-        state.status == GameStatus.timeout) {
-      return;
-    }
-
-    if (state.gameMode == GameMode.pva && state.turn != state.playerColor) {
-      return;
-    }
+    if (state.isThinking || _isTerminalStatus(state.status)) return;
+    if (state.gameMode == GameMode.pva && state.turn != state.playerColor) return;
 
     final selected = state.selected;
     if (selected == null) return;
@@ -148,7 +126,7 @@ class ChessGameNotifier extends StateNotifier<GameState> {
   }
 
   void _applyMove(Move move) {
-    _stateHistory.add(state); // save snapshot before move
+    _stateHistory.add(state);
     var newState = _gameService.applyMove(state, move);
     newState = newState.copyWith(isThinking: false);
     _handleStateUpdates(newState);
@@ -156,16 +134,17 @@ class ChessGameNotifier extends StateNotifier<GameState> {
 
   void undoMove() {
     if (state.gameMode == GameMode.pva) {
-      // In PvA, undo both the AI move and the player move
       if (_stateHistory.length >= 2) {
-        _stateHistory.removeLast(); // remove AI's move snapshot
-        state = _stateHistory.removeLast(); // restore before player's move
-      }
-    } else {
-      if (_stateHistory.isNotEmpty) {
+        _stateHistory.removeLast();
         state = _stateHistory.removeLast();
       }
+    } else if (_stateHistory.isNotEmpty) {
+      state = _stateHistory.removeLast();
     }
+  }
+
+  void dismissAiMessage() {
+    if (state.aiMessage != null) state = state.copyWith(clearMessage: true);
   }
 
   void _handleStateUpdates(GameState newState) {
@@ -177,10 +156,8 @@ class ChessGameNotifier extends StateNotifier<GameState> {
 
     state = newState;
 
-    if (state.status == GameStatus.checkmate ||
-        state.status == GameStatus.draw ||
-        state.status == GameStatus.timeout) {
-      _gameTimer?.cancel();
+    if (_isTerminalStatus(state.status)) {
+      _timerService.cancel();
       return;
     }
 
@@ -191,9 +168,11 @@ class ChessGameNotifier extends StateNotifier<GameState> {
 
   Future<void> _makeAiMove() async {
     state = state.copyWith(isThinking: true);
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 300));
 
-    final bestMove = _aiService.findBestMove(state);
+    final bestMove = await _aiService.findBestMoveAsync(state);
+    if (!mounted) return;
+
     if (bestMove != null) {
       _applyMove(bestMove);
     } else {
@@ -201,9 +180,14 @@ class ChessGameNotifier extends StateNotifier<GameState> {
     }
   }
 
+  bool _isTerminalStatus(GameStatus status) =>
+      status == GameStatus.checkmate ||
+      status == GameStatus.draw ||
+      status == GameStatus.timeout;
+
   @override
   void dispose() {
-    _gameTimer?.cancel();
+    _timerService.dispose();
     super.dispose();
   }
 }

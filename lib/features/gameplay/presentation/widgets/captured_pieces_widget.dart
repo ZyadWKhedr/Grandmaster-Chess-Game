@@ -1,40 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:grandmaster_chess/core/extensions/piece_symbol.dart';
+import 'package:grandmaster_chess/core/widgets/app_badge.dart';
 import 'package:grandmaster_chess/features/gameplay/domain/entities/piece.dart';
 
+/// Renders captured pieces with an optional point advantage badge.
 class CapturedPiecesWidget extends StatelessWidget {
   final List<Piece> captured;
+  final int materialAdvantage;
 
-  const CapturedPiecesWidget({super.key, required this.captured});
+  const CapturedPiecesWidget({
+    super.key,
+    required this.captured,
+    this.materialAdvantage = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      height: 40.h,
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      color: isDark ? Colors.black26 : Colors.grey[200],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
       child: Row(
-        children: captured.map((p) => _buildCapturedPiece(context, p)).toList(),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ...captured.map(_buildPiece),
+          if (materialAdvantage > 0) ...[
+            SizedBox(width: 6.w),
+            AppBadge(
+              label: '+$materialAdvantage',
+              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+            ),
+          ],
+        ],
       ),
     );
   }
 
-  Widget _buildCapturedPiece(BuildContext context, Piece piece) {
-    final double fontSize = switch (piece.type) {
-      PieceType.king => 28.sp,
-      PieceType.queen => 26.sp,
-      PieceType.bishop => 24.sp,
-      PieceType.knight => 24.sp,
-      PieceType.rook => 22.sp,
-      PieceType.pawn => 18.sp,
+  Widget _buildPiece(Piece piece) {
+    final double size = switch (piece.type) {
+      PieceType.king => 22.sp,
+      PieceType.queen => 20.sp,
+      PieceType.bishop || PieceType.knight => 18.sp,
+      PieceType.rook => 17.sp,
+      PieceType.pawn => 14.sp,
     };
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 2.w),
-      child: piece.render(fontSize: fontSize, bold: false),
+      padding: EdgeInsets.symmetric(horizontal: 1.5.w),
+      child: piece.renderImage(size: size),
     );
   }
 }

@@ -18,9 +18,11 @@ class TTEntry {
   });
 }
 
+/// A cache for evaluated positions using Zobrist hashing.
+/// Uses a compact size (65,536 entries) to prevent OOM on low-end devices
+/// while providing rapid lookups and clearing.
 class TranspositionTable {
-  // Using a fixed size table (e.g., 2^20 entries)
-  static const int _tableSize = 1048576; // 1048576 = 0x100000
+  static const int _tableSize = 65536; // 64K entries (0x10000)
   static const int _tableMask = _tableSize - 1;
 
   final List<TTEntry?> _table = List.filled(_tableSize, null);
@@ -35,14 +37,13 @@ class TranspositionTable {
     final index = key & _tableMask;
     final existing = _table[index];
 
-    // Always replace strategy or replace if depth is greater/equal
     if (existing == null || depth >= existing.depth) {
       _table[index] = TTEntry(
         key: key,
         depth: depth,
         score: score,
         type: type,
-        bestMove: bestMove ?? existing?.bestMove, // Keep previous best move if none provided
+        bestMove: bestMove ?? existing?.bestMove,
       );
     }
   }
@@ -50,7 +51,6 @@ class TranspositionTable {
   TTEntry? get(int key) {
     final index = key & _tableMask;
     final entry = _table[index];
-
     if (entry != null && entry.key == key) {
       return entry;
     }
@@ -58,8 +58,6 @@ class TranspositionTable {
   }
 
   void clear() {
-    for (int i = 0; i < _tableSize; i++) {
-      _table[i] = null;
-    }
+    _table.fillRange(0, _tableSize, null);
   }
 }

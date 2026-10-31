@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:grandmaster_chess/core/providers/ad_provider.dart';
+import 'package:grandmaster_chess/core/services/network_service.dart';
 import 'package:grandmaster_chess/features/splash/presentation/providers/splash_state.dart';
 
 class SplashNotifier extends StateNotifier<SplashState> {
@@ -14,22 +16,43 @@ class SplashNotifier extends StateNotifier<SplashState> {
   }
 
   void _initialize() {
-    _loadAds();
+    _checkNetworkAndLoadAds();
     _startTimers();
   }
 
-  Future<void> _loadAds() async {
+  Future<void> _checkNetworkAndLoadAds() async {
     try {
-      // Load banner ad first
+      final networkService = _ref.read(networkServiceProvider);
+      final hasInternet = await networkService.hasInternetConnection();
+
+      if (!mounted) return;
+
+      if (!hasInternet) {
+        debugPrint('SplashNotifier: No internet connection. Skipping ads.');
+        state = state.copyWith(
+          hasInternet: false,
+          adsLoaded: true,
+          status: state.minTimeElapsed
+              ? SplashStatus.ready
+              : SplashStatus.adsLoaded,
+          loadingMessage: 'Offline mode...',
+        );
+        return;
+      }
+
+      debugPrint('SplashNotifier: Internet connection active. Loading ads...');
+      state = state.copyWith(
+        hasInternet: true,
+        loadingMessage: 'Preparing tournament...',
+      );
+
       final bannerNotifier = _ref.read(bannerAdProvider.notifier);
       await bannerNotifier.loadAd();
 
-      // Load interstitial ad
       final interstitialService = _ref.read(interstitialAdProvider);
       interstitialService.loadAd();
 
-      // Give some time for interstitial to start loading
-      await Future.delayed(const Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 400));
 
       if (mounted) {
         state = state.copyWith(
@@ -41,7 +64,7 @@ class SplashNotifier extends StateNotifier<SplashState> {
         );
       }
     } catch (e) {
-      // If ads fail to load, continue anyway
+      debugPrint('SplashNotifier: Error during network/ad load: $e');
       if (mounted) {
         state = state.copyWith(
           adsLoaded: true,
@@ -55,7 +78,6 @@ class SplashNotifier extends StateNotifier<SplashState> {
   }
 
   void _startTimers() {
-    // Minimum splash screen duration of 2.5 seconds
     _minTimer = Timer(const Duration(milliseconds: 2500), () {
       if (mounted) {
         state = state.copyWith(
@@ -65,7 +87,6 @@ class SplashNotifier extends StateNotifier<SplashState> {
       }
     });
 
-    // Maximum wait time of 5 seconds (fallback if ads take too long)
     _maxTimer = Timer(const Duration(seconds: 5), () {
       if (mounted && !state.adsLoaded) {
         state = state.copyWith(

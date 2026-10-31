@@ -38,7 +38,7 @@ class PromotionDialog extends ConsumerWidget {
                 ),
                 borderRadius: BorderRadius.circular(8.r),
               ),
-              child: piece.render(fontSize: 40.sp),
+              child: piece.renderImage(size: 40.sp),
             ),
           );
         }).toList(),
